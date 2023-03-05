@@ -8,6 +8,6 @@ RUN pip install -r requirements.txt && \
     pip uninstall opencv-python && \
     pip uninstall opencv-contrib-python && \
     pip uninstall opencv-contrib-python-headless && \
-    pip3 install opencv-contrib-python==4.5.5.62 && \
+    pip3 install opencv-python-headless
     
 CMD streamlit run main.py

@@ -5,5 +5,5 @@ WORKDIR /user/app
 RUN pip install -r requirements.txt && \ 
     apt update && apt install -y libsm6 libxext6 && \
     pip3 install opencv-python-headless 
-    
-CMD streamlit run main.py
+
+CMD streamlit run main.py --server.port 5000

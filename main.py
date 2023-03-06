@@ -5,7 +5,7 @@ import numpy as np
 import time
 import tempfile
 from PIL import Image
-from streamlit_webrtc import webrtc_streamer
+from streamlit_webrtc import webrtc_streamer, VideoTransformerBase, RTCConfiguration, VideoProcessorBase, WebRtcMode
 import av
 
 
@@ -132,7 +132,6 @@ elif app_mode == 'Run on Image':
     
 
 elif app_mode == 'Run on Video':
-
 
     st.set_option('deprecation.showfileUploaderEncoding', False)
 
@@ -342,7 +341,9 @@ if app_mode =='Run on Webcam':
                 prevTime = currTime
             
                 return out_image, prevTime
-            
+    
+    RTC_CONFIGURATION = RTCConfiguration({"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]})
 
-    webrtc_streamer(key='first-step', video_processor_factory=VideoProcessor)
+    webrtc_streamer(key="example", mode=WebRtcMode.SENDRECV, rtc_configuration=RTC_CONFIGURATION,
+                        video_processor_factory=VideoProcessor)
 

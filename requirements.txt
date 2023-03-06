@@ -1,5 +1,9 @@
 mediapipe
-numpy
-streamlit
 streamlit-webrtc
 opencv-python-headless
+streamlit
+opencv-python-headless
+numpy
+pytesseract
+nltk
+pandas

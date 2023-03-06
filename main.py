@@ -5,11 +5,14 @@ import numpy as np
 import time
 import tempfile
 from PIL import Image
+from streamlit_webrtc import webrtc_streamer
+import av
 
 
 
 mp_drawing = mp.solutions.drawing_utils
 mp_face_mesh = mp.solutions.face_mesh
+mp_drawing_styles = mp.solutions.drawing_styles 
 
 DEMO_IMAGE = 'demo.jpg'
 DEMO_VIDEO = 'demo.mp4'
@@ -43,19 +46,20 @@ def image_resize(image, width=None, height=None, inter = cv2.INTER_AREA):
         return image 
     
     if width is None:
-        r = width/float(w)
+        r = height/float(h)
         dim = (int(w*r), height)
     else:
         r = width/float(w)
         dim = (width, int(h*r))
-    
+ 
     # resizee the image
     resized = cv2.resize(image, dim, interpolation=inter)
 
     return resized
 
 app_mode = st.sidebar.selectbox('Choose the App Mode',
-                                ['About App', 'Run on Image', 'Run on Video'],
+                                ['About App', 'Run on Image', 'Run on Video', 
+                                 'Run on Webcam'],
                                 )
 
 
@@ -81,7 +85,7 @@ elif app_mode == 'Run on Image':
     st.markdown('**Detected Faces**')
     kpi1_text = st.markdown('0')
 
-    max_faces = st.sidebar.number_input('Maximum Number of Faces', value=2, min_value=1)
+    max_faces = st.sidebar.number_input('Maximum Number of Faces', value=3, min_value=1)
     detection_confidence = st.sidebar.slider('Min Detection Conficence', min_value=0.0, max_value=1.0, value=0.5)
     st.markdown('---')
 
@@ -97,7 +101,7 @@ elif app_mode == 'Run on Image':
     st.sidebar.image(image)
 
     face_count = 0
-    drawing_spec = mp_drawing.DrawingSpec(thickness=0, circle_radius=0)
+    drawing_spec = mp_drawing.DrawingSpec(thickness=1, circle_radius=0)
 
 
     ## Dashboard
@@ -129,9 +133,10 @@ elif app_mode == 'Run on Image':
 
 elif app_mode == 'Run on Video':
 
+
     st.set_option('deprecation.showfileUploaderEncoding', False)
 
-    use_webcam = st.sidebar.button('Use webcam')
+ 
     record = st.sidebar.checkbox('Record Video')
 
     if record:
@@ -152,11 +157,9 @@ elif app_mode == 'Run on Video':
     tffile = tempfile.NamedTemporaryFile(delete=False)
 
     if not video_file_buffer:
-        if use_webcam:
-            vid = cv2.VideoCapture(0)
-        else:
-            vid = cv2.VideoCapture(DEMO_VIDEO)
-            tffile.name = DEMO_VIDEO
+        vid = cv2.VideoCapture(DEMO_VIDEO)
+        tffile.name = DEMO_VIDEO
+        
     else:
         tffile.write(video_file_buffer.read())
         vid = cv2.VideoCapture(tffile.name)
@@ -273,5 +276,73 @@ elif app_mode == 'Run on Video':
         # st.image(out_image, use_column_width=True)
 
 
+
+if app_mode =='Run on Webcam':
+    st.title('live video feed is here')
     
+    
+
+
+
+    class VideoProcessor:
+        prevTime_ = 0
+        fps_ = 0
+        faces = 0
+        width = 0
+
+        # Dashboard
+        st.sidebar.markdown('---')
+
+
+        st.markdown('---')
+
+        def recv(self, frame):
+
+            
+            img = frame.to_ndarray(format='bgr24')
+
+            output, self.prevTime_ = self.apply_facemesh(img, self.prevTime_)
+
+            return av.VideoFrame.from_ndarray(output, format='bgr24')
+            
+                
+        def apply_facemesh(self, image, prevTime):
+            
+            # image = image
+
+            face_count = 0
+            drawing_spec = mp_drawing.DrawingSpec(thickness=1, circle_radius=1)
+
+
+            ## Image Processing
+
+            with mp_face_mesh.FaceMesh(
+            static_image_mode = True,
+            max_num_faces = 4 ,
+            min_detection_confidence = 0.5
+            ) as face_mesh:
+                # print(self.max_faces, self.detection_confidence)
+                
+                results = face_mesh.process(image)
+                out_image = image.copy()
+               
+                # FaceLandmark Drawing
+                if results.multi_face_landmarks:
+                    for face_landmarks in results.multi_face_landmarks:
+                        face_count += 1
+
+                        mp_drawing.draw_landmarks(
+                        image = out_image,
+                        landmark_list = face_landmarks,
+                        connections = mp_face_mesh.FACEMESH_CONTOURS,
+                        landmark_drawing_spec = drawing_spec)
+
+                currTime = time.time()
+                fps = 1/ (currTime - prevTime)
+                prevTime = currTime
+            
+                return out_image, prevTime
+            
+
+    webrtc_streamer(key='first-step', video_processor_factory=VideoProcessor)
 

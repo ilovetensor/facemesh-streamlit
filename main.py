@@ -135,11 +135,8 @@ elif app_mode == 'Run on Video':
 
     st.set_option('deprecation.showfileUploaderEncoding', False)
 
- 
-    record = st.sidebar.checkbox('Record Video')
 
-    if record:
-        st.checkbox('Recording', value=True)
+
 
     
 
@@ -169,8 +166,6 @@ elif app_mode == 'Run on Video':
 
 
     #  Recording Part
-    codec = cv2.VideoWriter_fourcc('M', 'J', 'P', 'G')
-    out = cv2.VideoWriter('output1.mp4', codec, fps_input, (width, height))
 
     st.sidebar.text('Input Video')
     st.sidebar.video(tffile.name)
@@ -242,8 +237,7 @@ elif app_mode == 'Run on Video':
             prevTime = currTime
 
 
-            if record:
-                out.write(frame)
+           
 
             kpi1_text.write(f"<h1 style='text-align:center; color:red;padding: 0px;margin: 0px'>{int(fps)}</h1>", unsafe_allow_html=True)
             kpi2_text.write(f"<h1 style='text-align:center; color:red;padding: 0px;margin: 0px'>{face_count}</h1>", unsafe_allow_html=True)
@@ -253,13 +247,13 @@ elif app_mode == 'Run on Video':
             frame = image_resize(image= frame, width = 640)
             stframe.image(frame, channels = 'BGR', use_column_width=True)
 
-    st.text('Video Processed')
-    output_video = open('output1.mp4', 'rb')
-    out_bytes = output_video.read()
-    st.video(out_bytes)
+
+
+ 
+ 
 
     vid.release()
-    out.release()
+
 
 
 

@@ -8,6 +8,9 @@ from PIL import Image
 from streamlit_webrtc import webrtc_streamer, VideoTransformerBase, RTCConfiguration, VideoProcessorBase, WebRtcMode
 import av
 
+global prevTime
+prevTime = 0
+
 
 
 mp_drawing = mp.solutions.drawing_utils
@@ -66,7 +69,10 @@ app_mode = st.sidebar.selectbox('Choose the App Mode',
 if app_mode == 'About App':
     st.markdown('In this app lication we are using **MediaPipe** for creating a FaceMesh App, **Streamlit** is used to create the Web App GUI')
     
+    video_file = open('output.mp4', 'rb')
+    video_bytes = video_file.read()
 
+    st.video(video_bytes)
 
     st.markdown(
         '''
@@ -88,8 +94,10 @@ elif app_mode == 'Run on Image':
     max_faces = st.sidebar.number_input('Maximum Number of Faces', value=3, min_value=1)
     detection_confidence = st.sidebar.slider('Min Detection Conficence', min_value=0.0, max_value=1.0, value=0.5)
     st.markdown('---')
-
-    img_file_buffer = st.sidebar.file_uploader("Upload an Image", type=['jpg', 'png', 'jpeg'])
+    try:
+        img_file_buffer = st.sidebar.file_uploader("Upload an Image", type=['jpg', 'png', 'jpeg'])
+    except:
+        print("=====@@@@@=========")
     if img_file_buffer is not None:
         image = np.array(Image.open(img_file_buffer))
 
@@ -137,7 +145,6 @@ elif app_mode == 'Run on Video':
 
 
 
-
     
 
 
@@ -166,6 +173,14 @@ elif app_mode == 'Run on Video':
 
 
     #  Recording Part
+    # codec = cv2.VideoWriter_fourcc('M', 'J', 'P', 'G')
+    # codec = cv2.VideoWriter_fourcc(*'mp4v')
+    # fourcc = cv2.VideoWriter_fourcc(*'h264')
+    # fourcc = cv2.VideoWriter_fourcc(*'H264')
+    # out = cv2.VideoWriter('output.avi',cv2.VideoWriter_fourcc(*'MJPG'), fps_input, (width,height))
+    # out = cv2.VideoWriter('output.mp4',fourcc, fps_input, (width,height))
+    
+
 
     st.sidebar.text('Input Video')
     st.sidebar.video(tffile.name)
@@ -213,9 +228,22 @@ elif app_mode == 'Run on Video':
         while vid.isOpened():
             i += 1
             ret, frame = vid.read()
+           
+
             if not ret:
                 continue
+
             # frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+            # if record:
+            #     # print('writing')
+            # cv2.waitKey(1)
+            
+
+
+
+
+
             results = face_mesh.process(frame)
             frame.flags.writeable = True
 
@@ -235,9 +263,9 @@ elif app_mode == 'Run on Video':
             currTime = time.time()
             fps = 1/(currTime - prevTime)
             prevTime = currTime
+            
+            # out.write(frame)  
 
-
-           
 
             kpi1_text.write(f"<h1 style='text-align:center; color:red;padding: 0px;margin: 0px'>{int(fps)}</h1>", unsafe_allow_html=True)
             kpi2_text.write(f"<h1 style='text-align:center; color:red;padding: 0px;margin: 0px'>{face_count}</h1>", unsafe_allow_html=True)
@@ -246,27 +274,33 @@ elif app_mode == 'Run on Video':
             frame = cv2.resize(frame, (0,0), fx=0.8, fy=0.8)
             frame = image_resize(image= frame, width = 640)
             stframe.image(frame, channels = 'BGR', use_column_width=True)
+            
+          
 
 
-
- 
- 
-
+           
+    
+              
     vid.release()
+   
+    cv2.destroyAllWindows()
+    
+
+    
+ 
+  
+    
+    # st.text('Video Processed')
+    # video_file = open('output.mp4', 'rb')
+    # video_bytes = video_file.read()
+
+    # st.video(video_bytes)
 
 
 
 
 
 
-        # results = face_mesh.process(image)
-        # out_image = image.copy()
-
-        # # FaceLandmark Drawing
-        
-        #     kpi1_text.write(f"<h1 style='text-align:center; color:red;padding: 0px;margin: 0px'>{face_count}</h1>", unsafe_allow_html=True)
-        # st.subheader('Output Image')
-        # st.image(out_image, use_column_width=True)
 
 
 
@@ -277,67 +311,68 @@ if app_mode =='Run on Webcam':
 
 
 
-    class VideoProcessor:
-        prevTime_ = 0
-        fps_ = 0
-        faces = 0
-        width = 0
-
-        # Dashboard
-        st.sidebar.markdown('---')
-
-
-        st.markdown('---')
-
-        def recv(self, frame):
-
-            
-            img = frame.to_ndarray(format='bgr24')
-
-            output, self.prevTime_ = self.apply_facemesh(img, self.prevTime_)
-
-            return av.VideoFrame.from_ndarray(output, format='bgr24')
-            
-                
-        def apply_facemesh(self, image, prevTime):
-            
-            # image = image
-
-            face_count = 0
-            drawing_spec = mp_drawing.DrawingSpec(thickness=1, circle_radius=1)
-
-
-            ## Image Processing
-
-            with mp_face_mesh.FaceMesh(
-            static_image_mode = True,
-            max_num_faces = 4 ,
-            min_detection_confidence = 0.5
-            ) as face_mesh:
-                # print(self.max_faces, self.detection_confidence)
-                
-                results = face_mesh.process(image)
-                out_image = image.copy()
-               
-                # FaceLandmark Drawing
-                if results.multi_face_landmarks:
-                    for face_landmarks in results.multi_face_landmarks:
-                        face_count += 1
-
-                        mp_drawing.draw_landmarks(
-                        image = out_image,
-                        landmark_list = face_landmarks,
-                        connections = mp_face_mesh.FACEMESH_CONTOURS,
-                        landmark_drawing_spec = drawing_spec)
-
-                currTime = time.time()
-                fps = 1/ (currTime - prevTime)
-                prevTime = currTime
-            
-                return out_image, prevTime
     
-    RTC_CONFIGURATION = RTCConfiguration({"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]})
+    prevTime = 0
+    fps_ = 0
+    faces = 0
+    width = 0
 
-    webrtc_streamer(key="example", mode=WebRtcMode.SENDRECV, rtc_configuration=RTC_CONFIGURATION,
-                        video_processor_factory=VideoProcessor)
+    # Dashboard
+    st.sidebar.markdown('---')
+    max_faces = st.sidebar.number_input('Max Face Count', value=2, min_value=1)
+    detection_confidence = st.sidebar.slider('Min. Detection Confidence', 0.0, 1.0, 0.10)
+
+    st.markdown('---')
+
+    def callback(frame):
+        global prevTime
+        
+        img = frame.to_ndarray(format='bgr24')
+
+        output, prevTime = apply_facemesh(img, prevTime)
+
+        return av.VideoFrame.from_ndarray(output, format='bgr24')
+        
+            
+    def apply_facemesh( image, prevTime):
+        
+        # image = image
+
+        face_count = 0
+        drawing_spec = mp_drawing.DrawingSpec(thickness=1, circle_radius=1)
+
+
+        ## Image Processing
+
+        with mp_face_mesh.FaceMesh(
+        static_image_mode = True,
+        max_num_faces = max_faces ,
+        min_detection_confidence = detection_confidence
+        ) as face_mesh:
+            # print(max_faces, detection_confidence)
+            
+            results = face_mesh.process(image)
+            out_image = image.copy()
+            
+            # FaceLandmark Drawing
+            if results.multi_face_landmarks:
+                for face_landmarks in results.multi_face_landmarks:
+                    face_count += 1
+
+                    mp_drawing.draw_landmarks(
+                    image = out_image,
+                    landmark_list = face_landmarks,
+                    connections = mp_face_mesh.FACEMESH_CONTOURS,
+                    landmark_drawing_spec = drawing_spec)
+
+            currTime = time.time()
+            fps = 1/ (currTime - prevTime)
+            prevTime = currTime
+        
+            return out_image, prevTime
+
+RTC_CONFIGURATION = RTCConfiguration({"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]})
+
+webrtc_streamer(key="example", mode=WebRtcMode.SENDRECV, rtc_configuration=RTC_CONFIGURATION,
+                    video_frame_callback=callback)
 

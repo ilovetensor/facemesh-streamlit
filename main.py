@@ -61,7 +61,7 @@ def image_resize(image, width=None, height=None, inter = cv2.INTER_AREA):
     return resized
 
 app_mode = st.sidebar.selectbox('Choose the App Mode',
-                                ['About App', 'Run on Image', 'Run on Video', 
+                                ['About App', 'Run on Image', 
                                  'Run on Webcam'],
                                 )
 
@@ -69,19 +69,13 @@ app_mode = st.sidebar.selectbox('Choose the App Mode',
 if app_mode == 'About App':
     st.markdown('In this app lication we are using **MediaPipe** for creating a FaceMesh App, **Streamlit** is used to create the Web App GUI')
     
-    video_file = open('output.mp4', 'rb')
-    video_bytes = video_file.read()
-
-    st.video(video_bytes)
 
     st.markdown(
         '''
-        Hey this is **Rohan Sharma**. I love to build ML projects and currently looking for an *internship* in **Data Science** \n
-        If you liked my work, you can contact me from the following links on Social Media:
-
-        - [LinkedIn](https://www.linkedin.com/rohansharma11/)\n
-        - [GitHub](https://www.github.com/ilovetensor)\n
-        - [Kaggle](https://www.kaggle.com/hitman69)\n
+        Hey this is **Rohan Sharma**. Our team has built a streamlit webapp which applys a facemesh to any detected face using mediapipe lib. This facemesh can be applied to both image and live web cam video.
+    
+        - [GitHub](https://github.com/ilovetensor/facemesh-streamlit)\n
+        
         '''
     )
 
@@ -139,7 +133,7 @@ elif app_mode == 'Run on Image':
 
     
 
-elif app_mode == 'Run on Video':
+elif app_mode == 'abs':
 
     st.set_option('deprecation.showfileUploaderEncoding', False)
 
@@ -371,8 +365,8 @@ if app_mode =='Run on Webcam':
         
             return out_image, prevTime
 
-RTC_CONFIGURATION = RTCConfiguration({"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]})
+    RTC_CONFIGURATION = RTCConfiguration({"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]})
 
-webrtc_streamer(key="example", mode=WebRtcMode.SENDRECV, rtc_configuration=RTC_CONFIGURATION,
-                    video_frame_callback=callback)
+    webrtc_streamer(key="example", mode=WebRtcMode.SENDRECV, rtc_configuration=RTC_CONFIGURATION,
+                        video_frame_callback=callback)
 
